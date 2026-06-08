@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.transport.embed_routes import router as embed_router
+from app.transport.run_routes import router as run_router
 
 v1 = APIRouter(prefix="/v1")
 
@@ -11,3 +12,4 @@ async def healthz() -> dict:
 
 
 v1.include_router(embed_router)
+v1.include_router(run_router)
