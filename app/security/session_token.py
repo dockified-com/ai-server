@@ -37,3 +37,18 @@ def verify_session_token(token: str, signing_secret: str) -> dict:
         )
     except jwt.PyJWTError as exc:
         raise SessionTokenError(str(exc)) from exc
+
+
+from fastapi import Header, HTTPException, status
+
+from app.config import get_settings
+
+
+def require_session_claims(authorization: str | None = Header(default=None)) -> dict:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing session token")
+    token = authorization.split(" ", 1)[1]
+    try:
+        return verify_session_token(token, get_settings().session_signing_secret)
+    except SessionTokenError as exc:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from exc
