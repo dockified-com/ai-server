@@ -20,16 +20,16 @@ class AgentDef:
 
 
 AGENTS: dict[str, AgentDef] = {
-    "socratic": AgentDef("socratic", "claude-sonnet-4-6", d.SOCRATIC_SYSTEM_PROMPT, "stream", 512),
+    "socratic": AgentDef("socratic", "gemini-2.5-flash-lite", d.SOCRATIC_SYSTEM_PROMPT, "stream", 512),
     "understanding-check": AgentDef(
-        "understanding-check", "claude-sonnet-4-6", d.UNDERSTANDING_CHECK_SYSTEM_PROMPT, "stream", 512
+        "understanding-check", "gemini-2.5-flash-lite", d.UNDERSTANDING_CHECK_SYSTEM_PROMPT, "stream", 512
     ),
-    "ask": AgentDef("ask", "claude-sonnet-4-6", d.ASK_ANYTHING_SYSTEM_PROMPT, "stream", 1024),
-    "code-eval": AgentDef("code-eval", "claude-haiku-4-5-20251001", d.CODE_EVAL_SYSTEM_PROMPT, "json", 64),
-    "agent-edit": AgentDef("agent-edit", "claude-sonnet-4-6", d.AGENT_EDIT_SYSTEM_PROMPT, "json", 4096),
-    "outline": AgentDef("outline", "claude-opus-4-8", d.OUTLINE_SYSTEM_PROMPT, "json", 4096),
+    "ask": AgentDef("ask", "gemini-2.5-flash-lite", d.ASK_ANYTHING_SYSTEM_PROMPT, "stream", 1024),
+    "code-eval": AgentDef("code-eval", "gemini-2.5-flash-lite", d.CODE_EVAL_SYSTEM_PROMPT, "json", 64),
+    "agent-edit": AgentDef("agent-edit", "gemini-2.5-flash-lite", d.AGENT_EDIT_SYSTEM_PROMPT, "json", 4096),
+    "outline": AgentDef("outline", "gemini-2.5-flash-lite", d.OUTLINE_SYSTEM_PROMPT, "json", 4096),
     "generate-blocks": AgentDef(
-        "generate-blocks", "claude-opus-4-8", d.LESSON_BLOCKS_SYSTEM_PROMPT, "json", 4096
+        "generate-blocks", "gemini-2.5-flash-lite", d.LESSON_BLOCKS_SYSTEM_PROMPT, "json", 8192
     ),
 }
 

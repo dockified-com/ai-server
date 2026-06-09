@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     session_signing_secret: str
     session_token_ttl_seconds: int = 300
 
-    anthropic_api_key: str
-    openai_api_key: str
+    anthropic_api_key: str = ""
+    openai_api_key: str = ""
     gemini_api_key: str
 
 

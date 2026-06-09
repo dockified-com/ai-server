@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from app.providers.openai_provider import embed_texts
+from app.providers.gemini_provider import embed_texts
 from app.security.service_secret import service_secret_guard
 
 router = APIRouter()

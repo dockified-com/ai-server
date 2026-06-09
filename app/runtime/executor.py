@@ -3,25 +3,13 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 
 from app.agents.registry import AgentDef
-from app.providers.anthropic_provider import anthropic_client
+from app.providers.gemini_provider import generate_text, stream_text
 
 
 async def run_json(agent: AgentDef, user_message: str) -> str:
-    resp = await anthropic_client.messages.create(
-        model=agent.model,
-        max_tokens=agent.max_tokens,
-        system=agent.system_prompt,
-        messages=[{"role": "user", "content": user_message}],
-    )
-    return resp.content[0].text
+    return await generate_text(agent.system_prompt, user_message, agent.max_tokens, agent.model)
 
 
 async def run_stream(agent: AgentDef, user_message: str) -> AsyncGenerator[str, None]:
-    async with anthropic_client.messages.stream(
-        model=agent.model,
-        max_tokens=agent.max_tokens,
-        system=agent.system_prompt,
-        messages=[{"role": "user", "content": user_message}],
-    ) as stream:
-        async for chunk in stream.text_stream:
-            yield chunk
+    async for chunk in stream_text(agent.system_prompt, user_message, agent.max_tokens, agent.model):
+        yield chunk
