@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     gemini_api_key: str
 
+    # Next app base for graph tools (service-secret HTTP). Prefer internal URL.
+    next_internal_url: str = "http://127.0.0.1:3000"
+    next_app_url: str = "http://127.0.0.1:3000"
+
 
 @lru_cache
 def get_settings() -> Settings:
