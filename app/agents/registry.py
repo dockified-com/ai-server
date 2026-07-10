@@ -21,6 +21,10 @@ class AgentDef:
 
 # V1 tutoring registry — generation agents intentionally omitted for pilot deploys.
 AGENTS: dict[str, AgentDef] = {
+    # LangGraph multi-turn session (POST /v1/tutor/stream). Mint validates this name.
+    "tutor_session": AgentDef(
+        "tutor_session", "gemini-2.5-flash-lite", d.TUTOR_OPEN_SYSTEM_PROMPT, "stream", 1024
+    ),
     "tutor_open": AgentDef(
         "tutor_open", "gemini-2.5-flash-lite", d.TUTOR_OPEN_SYSTEM_PROMPT, "stream", 512
     ),

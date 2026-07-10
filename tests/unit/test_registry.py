@@ -10,6 +10,12 @@ def test_known_agent_has_fields():
     assert a.system_prompt
 
 
+def test_tutor_session_graph_agent_registered():
+    """Mint validates tutor_session for /v1/tutor/stream (LangGraph)."""
+    assert get_agent("tutor_session").mode == "stream"
+    assert get_agent("tutor_session").name == "tutor_session"
+
+
 def test_tutoring_open_agents_registered():
     assert get_agent("tutor_open").mode == "stream"
     assert get_agent("pre_assess").mode == "stream"
