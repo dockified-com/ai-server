@@ -52,7 +52,17 @@ async def reason_endpoint(
 ) -> EventSourceResponse:
     agent_name = claims["agent"]
     server_context = claims.get("server_context", {})
+    # Validate agent exists (tts is mint-compatible for /v1/speak only).
     agent = get_agent(agent_name)
+
+    # TTS audio is produced by /v1/speak. A reason stream for tts must not crash
+    # or call a text model — complete cleanly with done.
+    if agent_name == "tts":
+        async def _tts_events() -> AsyncGenerator[dict, None]:
+            yield {"event": "done", "data": ""}
+
+        return EventSourceResponse(_tts_events())
+
     user_message = build_user_message(agent_name, server_context, body.client_context)
 
     async def _events() -> AsyncGenerator[dict, None]:

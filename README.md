@@ -83,6 +83,69 @@ Once running, the server is available at **`http://127.0.0.1:8000`**. You can ve
 
 ---
 
+## V1 Tutoring Agents
+
+Generation/authoring agents (`outline`, `generate-blocks`, `agent-edit`) are **omitted** from the default registry for pilot deploys. Registered agents:
+
+| Agent | Mode | Endpoint | Purpose |
+| --- | --- | --- | --- |
+| `tutor_open` | stream | `POST /v1/reason` | Session open: greet, course name, ask preferred name (no teaching) |
+| `pre_assess` | stream | `POST /v1/reason` | Short pre-assessment dialogue; propose beginner/intermediate/advanced |
+| `socratic` | stream | `POST /v1/reason` | Socratic code hints (no full solutions) |
+| `understanding-check` | stream | `POST /v1/reason` | Rubric evaluation; emits signed `result` event |
+| `ask` | stream | `POST /v1/reason` | Course-context Q&A; emits signed `result` event |
+| `final_clarify` | stream | `POST /v1/reason` | Final-eval wording-only clarify (no hints/code/strategy) |
+| `code-eval` | json | `POST /v1/run` | Pass/fail code verdict JSON |
+| `tts` | stream (placeholder) | `POST /v1/speak` | Session mint only for TTS; audio via `/v1/speak`, not text generation |
+
+Message builders live in `app/runtime/reasoning.py` (`build_user_message`). Server-sealed fields come from JWT `server_context`; turn data comes from request `client_context`.
+
+---
+
+## Next → mint session → browser SSE to `/v1/reason`
+
+Tutoring text is never called with long-lived API keys from the browser. Flow:
+
+1. **Next.js (server)** mints a short-lived session JWT:
+   ```http
+   POST /v1/session
+   Authorization: Bearer <AI_SERVICE_SECRET>
+   Content-Type: application/json
+
+   {
+     "agent": "tutor_open",
+     "server_context": {
+       "courseTitle": "Intro Python",
+       "lessonTitle": "Variables"
+     }
+   }
+   ```
+   Response: `{ "session_token": "<jwt>", "expires_in": 300 }`.  
+   The JWT embeds `agent` + `server_context` (problem prompt, rubric, RAG chunks, etc.) and is signed with `SESSION_SIGNING_SECRET`.
+
+2. **Browser** streams tokens with that token (no service secret):
+   ```http
+   POST /v1/reason
+   Authorization: Bearer <session_token>
+   Content-Type: application/json
+
+   {
+     "client_context": {
+       "message": "Hi, call me Alex"
+     }
+   }
+   ```
+
+3. **SSE events** from `/v1/reason`:
+   - `event: token` — text chunk (`data` is the raw token string)
+   - `event: result` — optional signed JWT payload (currently `understanding-check` and `ask` only)
+   - `event: done` — stream complete
+   - `event: error` — model/runtime failure (`data`: `AI temporarily unavailable`)
+
+4. **Speech (optional):** Next mints a session with `"agent": "tts"`, then the browser (or Next) calls `POST /v1/speak` with the session token and text. Hitting `/v1/reason` with a `tts` session completes with `done` only (no model call).
+
+---
+
 ## Running Quality Checks
 
 ### Run Tests

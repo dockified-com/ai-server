@@ -14,6 +14,8 @@ def test_tutoring_open_agents_registered():
     assert get_agent("tutor_open").mode == "stream"
     assert get_agent("pre_assess").mode == "stream"
     assert get_agent("final_clarify").mode == "stream"
+    # Mint-compatible placeholder for /v1/speak
+    assert get_agent("tts").mode == "stream"
 
 
 def test_run_agent_is_json_mode():
