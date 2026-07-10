@@ -8,8 +8,16 @@ from typing import Any, Callable, Awaitable
 from google.genai import types
 
 from app.providers.gemini_provider import TEXT_MODEL, gemini_client
+from app.graphs.tutor_session.tools.block_context import (
+    GET_BLOCK_CONTEXT_DECLARATION,
+    get_block_context,
+)
 from app.graphs.tutor_session.tools.profile import SAVE_PROFILE_DECLARATION, save_profile
 from app.graphs.tutor_session.tools.progress import CHECK_PROGRESS_DECLARATION, check_progress
+from app.graphs.tutor_session.tools.submission import (
+    GET_LAST_SUBMISSION_DECLARATION,
+    get_last_submission,
+)
 
 MAX_TOOL_ROUNDS = 3
 DEFAULT_MAX_TOKENS = 512
@@ -47,6 +55,16 @@ async def _dispatch_tool(
         )
     if name == "check_progress":
         return await check_progress(enrollment_id)
+    if name == "get_block_context":
+        return await get_block_context(
+            enrollment_id,
+            block_id=args.get("block_id") or args.get("blockId"),
+        )
+    if name == "get_last_submission":
+        return await get_last_submission(
+            enrollment_id,
+            block_id=args.get("block_id") or args.get("blockId"),
+        )
     return {"ok": False, "error": f"unknown tool: {name}"}
 
 
@@ -56,6 +74,10 @@ def _declarations_for(allowed: set[str]) -> list[types.FunctionDeclaration]:
         out.append(SAVE_PROFILE_DECLARATION)
     if "check_progress" in allowed:
         out.append(CHECK_PROGRESS_DECLARATION)
+    if "get_block_context" in allowed:
+        out.append(GET_BLOCK_CONTEXT_DECLARATION)
+    if "get_last_submission" in allowed:
+        out.append(GET_LAST_SUBMISSION_DECLARATION)
     return out
 
 

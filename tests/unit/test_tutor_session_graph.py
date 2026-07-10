@@ -21,6 +21,8 @@ def test_graph_compiles():
     assert "router" in node_ids
     assert "open_name" in node_ids
     assert "pre_assess" in node_ids
+    assert "teach" in node_ids
+    assert "practice_help" in node_ids
 
 
 def test_entry_merges_server_context_into_profile_and_task():
@@ -70,8 +72,24 @@ def test_router_maps_pre_assess_stage():
     assert route_after_router({**state, **out}) == "pre_assess"
 
 
+def test_router_active_to_teach():
+    state: TutorState = {"task": {"tutor_stage": "active"}, "messages": []}
+    out = router_node(state)
+    assert out["route"] == "teach"
+    assert route_after_router({**state, **out}) == "teach"
+
+
+def test_router_active_help_intent_to_practice_help():
+    state: TutorState = {
+        "task": {"tutor_stage": "active", "last_verdict": "failed"},
+        "messages": [{"role": "user", "content": "I'm stuck, need a hint"}],
+    }
+    out = router_node(state)
+    assert out["route"] == "practice_help"
+
+
 def test_router_defaults_unknown_to_open_name():
-    state: TutorState = {"task": {"tutor_stage": "active"}}
+    state: TutorState = {"task": {"tutor_stage": "weird_stage"}}
     out = router_node(state)
     assert out["route"] == "open_name"
     assert route_after_router({**state, **out}) == "open_name"
@@ -183,3 +201,71 @@ async def test_graph_ainvoke_pre_assess_path(monkeypatch):
     assert "quick question" in result["assistant_text"]
     assert result["route"] == "pre_assess"
     assert result["profile"].get("preferred_name") == "Sam"
+
+
+@pytest.mark.asyncio
+async def test_graph_ainvoke_teach_path(monkeypatch):
+    from app.graphs.tutor_session.nodes import teach as teach_mod
+
+    async def fake_teach(**kwargs):
+        tools = kwargs.get("allowed_tools") or set()
+        assert "get_block_context" in tools
+        return "This block covers HTTP GET handlers.", []
+
+    monkeypatch.setattr(teach_mod, "run_node_llm", fake_teach)
+
+    graph = compile_tutor_session_graph(checkpointer=MemorySaver())
+    result = await graph.ainvoke(
+        {
+            "mint": {
+                "server_context": {
+                    "profile": {"preferredName": "Sam", "assessedLevel": "beginner"},
+                    "task": {
+                        "tutorStage": "active",
+                        "enrollmentId": "e3",
+                        "currentBlockId": "b1",
+                    },
+                },
+            },
+            "messages": [{"role": "user", "content": "explain this"}],
+            "tool_results": [],
+            "assistant_text": "",
+        },
+        config={"configurable": {"thread_id": "enrollment:e3"}},
+    )
+    assert "HTTP GET" in result["assistant_text"]
+    assert result["route"] == "teach"
+
+
+@pytest.mark.asyncio
+async def test_graph_ainvoke_practice_help_path(monkeypatch):
+    from app.graphs.tutor_session.nodes import practice_help as ph_mod
+
+    async def fake_help(**kwargs):
+        tools = kwargs.get("allowed_tools") or set()
+        assert "get_last_submission" in tools
+        return "What does the error on line 3 suggest?", []
+
+    monkeypatch.setattr(ph_mod, "run_node_llm", fake_help)
+
+    graph = compile_tutor_session_graph(checkpointer=MemorySaver())
+    result = await graph.ainvoke(
+        {
+            "mint": {
+                "server_context": {
+                    "task": {
+                        "tutorStage": "active",
+                        "enrollmentId": "e4",
+                        "currentBlockId": "b2",
+                        "lastCodeVerdict": "failed",
+                    },
+                },
+            },
+            "messages": [{"role": "user", "content": "help me I'm stuck"}],
+            "tool_results": [],
+            "assistant_text": "",
+        },
+        config={"configurable": {"thread_id": "enrollment:e4"}},
+    )
+    assert "line 3" in result["assistant_text"]
+    assert result["route"] == "practice_help"
